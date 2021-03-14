@@ -1,4 +1,5 @@
 # coding : UTF-8
+
 import csv
 from datetime import datetime
 from functions_scraping import product_page_scraping
@@ -14,10 +15,10 @@ book_title = 'Tsubasa'
 now = datetime.now()
 new_run_folder = book_title + " book features" + now.strftime("_%d-%m-%Y at %Hh%Mm%Ss")
 os.mkdir(new_run_folder)
-image_folder = 'image'
 os.chdir(new_run_folder)
 
 #création d'un sous-dossier 'image'
+image_folder = 'image'
 os.mkdir(image_folder)
 
 # création du dossier csv avec ses titres de colonnes

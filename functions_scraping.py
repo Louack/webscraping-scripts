@@ -73,17 +73,16 @@ def product_page_scraping(url, category_title, image_folder):
     #téléchargement de l'image dans le sous-dossier 'image'
     os.chdir(image_folder)
     img_dl = requests.get(image_url)
-    with open(upc+'.jpg', 'wb') as img:
+    with open(upc + '.jpg', 'wb') as img:
         img.write(img_dl.content)
     os.chdir('..')
 
 
 def category_screening(link, category_title, page, image_folder):
-    link = link+page
     if 'index.html' in link:
-        page = 'index.html'
-    if 'page-1.html' in link:
-        page = 'page-1.html'
+        link = link.replace('index.html', page)
+    else:
+        link = link+page
     # récupération du code HTML de la page 'category' en UTF-8
     category_page = requests.get(link)
     category_page.encoding = 'UTF-8'
@@ -98,10 +97,6 @@ def category_screening(link, category_title, page, image_folder):
         product_page_scraping(book_link, category_title, image_folder)
     next_button = soup.find('li', class_='next')
     if next_button is not None:
-        print('next is present')
         next_button = next_button.a['href']
         link = link.replace(page, '')
-        print(next_button)
         category_screening(link, category_title, next_button, image_folder)
-    else:
-        print('no next')

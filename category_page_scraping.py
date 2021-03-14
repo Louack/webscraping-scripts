@@ -1,12 +1,11 @@
 # coding UTF-8
-import requests
-from bs4 import BeautifulSoup
+
 from datetime import datetime
 from functions_scraping import category_screening
 import os
 import csv
 
-link = 'http://books.toscrape.com/catalogue/category/books/fantasy_19/page-1.html'
+link = 'http://books.toscrape.com/catalogue/category/books/travel_2/index.html'
 category_title = 'Fantasy'
 
 
@@ -17,7 +16,9 @@ now = datetime.now()
 new_run_folder = category_title + now.strftime("_%d-%m-%Y at %Hh%Mm%Ss")
 os.mkdir(new_run_folder)
 os.chdir(new_run_folder)
-image_folder = category_title + ' images'
+
+#création d'un sous-dossier 'image'
+image_folder = category_title + '_images'
 os.mkdir(image_folder)
 
 
