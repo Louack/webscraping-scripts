@@ -13,9 +13,13 @@ csv_title = 'test'
 
 # création d'un dossier et éxécution du code/génération des données dans ce dossier
 now = datetime.now()
-new_run_folder = csv_title + now.strftime(" %d-%m-%Y at %Hh%Mm%Ss")
+new_run_folder = csv_title + now.strftime("_%d-%m-%Y at %Hh%Mm%Ss")
 os.mkdir(new_run_folder)
+image_folder = 'image'
 os.chdir(new_run_folder)
+
+#création d'un sous-dossier 'image'
+os.mkdir(image_folder)
 
 # création du dossier csv avec ses titres de colonnes
 csv_headers_column = ['url', 'upc', 'title', 'price_incl_tax', 'price_excl_tax', 'number_available',
@@ -25,7 +29,7 @@ with open(csv_title+'.csv', 'w', newline='', encoding='UTF-8') as f:
     writer.writerow(csv_headers_column)
 
 
-def product_page_scraping(url, category_title):
+def product_page_scraping(url, category_title, image_folder):
     # obtenir le code HTML de la page produit en UTF-8
     product_page = requests.get(url)
     product_page.encoding = 'UTF-8'
@@ -88,5 +92,12 @@ def product_page_scraping(url, category_title):
         writer = csv.writer(f)
         writer.writerow(wanted_features)
 
+    #téléchargement de l'image dans le sous-dossier 'image'
+    os.chdir(image_folder)
+    img_dl = requests.get(image_url)
+    with open(title+'.png', 'wb') as img:
+        img.write(img_dl.content)
+    os.chdir('..')
 
-product_page_scraping(link, csv_title)
+
+product_page_scraping(link, csv_title, image_folder)
