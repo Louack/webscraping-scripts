@@ -1,23 +1,49 @@
 # coding UTF-8
-import requests
+# fichier regroupant les différentes fonctions utilisées pour les 3 types d'analyse
 from bs4 import BeautifulSoup
+from datetime import datetime
+import requests
 import re
 import os
 import csv
 
 
-def product_page_scraping(url, category_title, image_folder):
-    # obtenir le code HTML de la page produit en UTF-8
-    product_page = requests.get(url)
-    product_page.encoding = 'UTF-8'
-    product_page = product_page.text
+# fonction création d'un dossier pour stocker les analyses
+def main_directory_creation(main_folder_title):
+    now = datetime.now()  # capture de date+heure à l'instant de l'éxécution de la ligne de code
+    new_run_folder = main_folder_title + now.strftime("_%d-%m-%Y at %Hh%Mm%Ss")  # composition du titre du dossier
+    os.mkdir(new_run_folder)  # création du nouveau dossier
+    os.chdir(new_run_folder)  # placement dans le nouveau dossier
 
-    # Structuer la page HTML avec BeautifulSoup
-    soup = BeautifulSoup(product_page, 'html.parser')
+
+# fonction création du sous-dossier image + fichier.csv
+def img_csv_creation(csv_title):
+    image_folder = csv_title + '_images'  # création du titre du dossier
+    os.mkdir(image_folder)  # création du sous-dossier 'image'
+
+    # création du dossier csv avec ses titres de colonnes
+    csv_headers_column = ['url', 'upc', 'title', 'price_incl_tax', 'price_excl_tax', 'number_available',
+                          'product_description', 'category', 'review_rating', 'image_url']
+    with open(csv_title + '.csv', 'w', newline='', encoding='UTF-8') as f:
+        writer = csv.writer(f)
+        writer.writerow(csv_headers_column)
+    return image_folder  # pour réutilisation de l'objet image_folder dans une autre fonction
+
+
+# fonction accédant au lien recherché + structuration du code HTML obtenu
+def page_request_then_bs(url):
+    response = requests.get(url)  # requête du lien
+    response.encoding = 'UTF-8'  # conversion en UTF-8
+    response = response.text  # accès au code HTML de la page
+    soup = BeautifulSoup(response, 'html.parser')  # structuration du code HTML
+    return soup
+
+
+# isolement/transformation des éléments d'interêt d'une page produit via navigation dans arborescence du code HTML
+def product_page_scraping(url, category_title, image_folder):
+    soup = page_request_then_bs(url)
 
     # recherche et listing des différents éléments à isoler
-    wanted_features = [url]
-
     # isolement des élements 'upc', 'price w/o tax' et 'availability'
     table = soup.find('table', class_='table table-striped')
     for row in table.findAll('tr'):
@@ -63,14 +89,13 @@ def product_page_scraping(url, category_title, image_folder):
     image_url = (soup.find('div', id='product_gallery').find('img'))['src'].replace('../../',
                                                                                     'http://books.toscrape.com/')
 
-    # ajout des différents éléments dans le fichier csv
-    wanted_features.extend([upc, title, price_incl_tax, price_excl_tax, number_available, product_description,
-                            category, review_rating, image_url])
-    with open(category_title+'.csv', 'a', newline='', encoding='UTF-8') as f:
+    # ajout des différents éléments dans le fichier csv (mode append)
+    with open(category_title + '.csv', 'a', newline='', encoding='UTF-8') as f:
         writer = csv.writer(f)
-        writer.writerow(wanted_features)
+        writer.writerow([url, upc, title, price_incl_tax, price_excl_tax, number_available, product_description,
+                        category, review_rating, image_url])
 
-    #téléchargement de l'image dans le sous-dossier 'image'
+    # téléchargement de l'image dans le sous-dossier 'image'
     os.chdir(image_folder)
     img_dl = requests.get(image_url)
     with open(upc + '.jpg', 'wb') as img:
@@ -78,25 +103,62 @@ def product_page_scraping(url, category_title, image_folder):
     os.chdir('..')
 
 
+# isolement/criblage des liens page_produit pour une catégorie donnée
 def category_screening(link, category_title, page, image_folder):
+    # construction du lien HTML quand plusieurs pages par catégorie
     if 'index.html' in link:
         link = link.replace('index.html', page)
     else:
         link = link+page
-    # récupération du code HTML de la page 'category' en UTF-8
-    category_page = requests.get(link)
-    category_page.encoding = 'UTF-8'
-    category_page = category_page.text
-    # parsing de la page 'category'
-    soup = BeautifulSoup(category_page, 'html.parser')
-    # isolement de la liste des livres
-    book_list = soup.findAll('h3')
-    for h3 in book_list:
+
+    soup = page_request_then_bs(link)
+
+    book_list = soup.findAll('h3')  # isolement de la liste des livres
+    for h3 in book_list:  # boucle de passant en revue chaque lien page produit
         book_link = h3.a['href'].replace('../../..', 'http://books.toscrape.com/catalogue')
         print(book_link)
-        product_page_scraping(book_link, category_title, image_folder)
-    next_button = soup.find('li', class_='next')
+        product_page_scraping(book_link, category_title, image_folder)  # Execution à chaque page produit
+    next_button = soup.find('li', class_='next')  # Détection d'un ongler 'next'
+    # construction du lien de la page suivante si 'next' est présent
     if next_button is not None:
         next_button = next_button.a['href']
         link = link.replace(page, '')
-        category_screening(link, category_title, next_button, image_folder)
+        category_screening(link, category_title, next_button, image_folder)  # rééxécution de la fonction
+
+
+# fonction complète analyse d'une page produit unique
+def page_product_analysis(book_title, link):
+    main_directory_creation(book_title)
+    image_folder = img_csv_creation(book_title)
+    product_page_scraping(link, book_title, image_folder)
+
+
+# fonction complète analyse d'une catégorie de livres
+def category_page_analysis(category_title, link):
+    page = ''
+    main_directory_creation(category_title)
+    image_folder = img_csv_creation(category_title)
+    category_screening(link, category_title, page, image_folder)
+
+
+# fonction complète analyse totale du site
+def website_analysis():
+    url_mainpage = 'http://books.toscrape.com/'
+    main_folder_title = "bookstoscrape analysis"
+
+    main_directory_creation(main_folder_title)
+    soup = page_request_then_bs(url_mainpage)
+
+    # isolement de la liste des catégories de livres
+    category_list = soup.find('ul', class_='nav nav-list')
+    category_list = category_list.find_next('ul')
+    category_list = category_list.findAll('a', href=True)
+
+    # criblage des liens categorie
+    for category_link in category_list:
+        csv_title = (category_link.text.strip())
+        category_link = (url_mainpage + category_link['href'])
+        print(category_link)
+        image_folder = img_csv_creation(csv_title)
+        page = ''
+        category_screening(category_link, csv_title, page, image_folder)  # execution fonction analyse catégorie
