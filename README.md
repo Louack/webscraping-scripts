@@ -45,8 +45,8 @@ Dans la ligne de commande, dans le dossier contenant les fichiers ci-dessus :
 2.  **category_page_screening.py** > analyse des pages produit d'une catégorie déterminée
 3.  **website_scraping.py** > analyse de l'intégralité du site
 
-* Chaque programme utilise des fonctions regroupés dans le fichier **functions_scraping.py**.
-* Le résultat d'une analyse est stockée dans un dossier (titre du livre/catégorie + date/heure). Ce dossier contient le/les fichier(s) .csv ainsi qu'un sous-dossier pour la/les image(s)
+* Chaque programme utilise des fonctions regroupées dans le fichier **functions_scraping.py**.
+* Le résultat d'une analyse est stocké dans un dossier (titre du livre/catégorie + date/heure). Ce dossier contient le/les fichier(s) .csv ainsi qu'un sous-dossier pour la/les image(s)
 * Le nom des images téléchargées correspond au code 'UPC' des livres associés.
 * Les programmes **product_page_scraping.py** et **category_page_screening.py** nécessitent deux saisies (lien HTML + titre du livre ou de la catégorie) de la part de l'utilisateur dans la console lors de l'éxécution du script.
 * Lors de la lecture d'un fichier .csv via un tableur, s'assurer que le tableur est configuré en **UTF-8** et la catégorie des cellules en **Nombre**, format **Standard**.
